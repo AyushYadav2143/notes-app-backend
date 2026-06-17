@@ -1,6 +1,9 @@
 const User=require("../models/User");
 const bcrypt=require("bcryptjs");
 const jwt=require("jsonwebtoken");
+const{PutObjectCommand}=require("@aws-sdk/client-s3");
+const s3=require("../config/s3");
+const{v4:uuidv4}=require("uuid");
 const registerUser=async(req,res)=>{
     try{
         const{name,email,password}=req.body;
@@ -80,8 +83,52 @@ const loginUser=async(req,res)=>{
             message:error.message
         });
     }
-}
+};
+const uploadProfilePicture=async(req,res)=>{
+    try{
+        if(!req.file){
+            return res.status(400).json({
+                message:"No file uploaded"
+            });
+        }
+        const file=req.file;
+        const fileName = `profile-pictures/${uuidv4()}-${file.originalname}`;
+        const params={
+            Bucket:process.env.AWS_BUCKET_NAME,
+            Key:fileName,
+            Body:file.buffer,
+            ContentType:file.mimetype
+            
+        };
+        await s3.send(
+            new PutObjectCommand(params)
+        );
+        const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+        const user=await User.findByIdAndUpdate(
+            req.user.id,
+            {
+                profilePic:imageUrl
+            },
+            {new:true}
+        );
+        res.status(200).json({
+            message:"Profile picture uploaded successfully",
+            user:{
+                id:user._id,
+                name:user.name,
+                email:user.email,
+                profilePic:user.profilePic
+            }
+        });
+    }
+    catch(error){
+        res.status(500).json({
+            message:error.message
+        });
+    }
+};
 module.exports={
     registerUser,
-    loginUser
+    loginUser,
+    uploadProfilePicture
 };

@@ -13,6 +13,13 @@ const userSchema=new mongoose.Schema({
     password:{
         type:String,
         required:true
+    },
+    profilePic:{
+        type:String
+    },
+    profilePic:{
+        type:String,
+        default:""
     }
 },{
     timestamps:true
