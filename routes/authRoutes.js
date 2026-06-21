@@ -5,7 +5,8 @@ const upload=require("../middleware/uploadMiddleware");
 const{
     registerUser,
     loginUser,
-    uploadProfilePicture
+    uploadProfilePicture,
+    getProfile
 }=require("../controllers/authController");
 router.post("/register",registerUser);
 router.post("/login",loginUser);
@@ -14,5 +15,10 @@ router.post(
     authMiddleware,
     upload.single("profilePic"),
     uploadProfilePicture
+);
+router.get(
+    "/profile",
+    authMiddleware,
+    getProfile
 );
 module.exports=router;
